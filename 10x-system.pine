@@ -1,0 +1,97 @@
+//@version=5
+indicator("10X System", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// ═══════════════════════ INPUTS ═══════════════════════
+len          = input.int(6,    "Curve Length",          group="Core")
+slAtrMult    = input.float(1.5,"SL Distance (ATR x)",   group="SL / TP", step=0.1)
+rrRatio      = input.float(2.0,"Risk : Reward",         group="SL / TP", step=0.5)
+
+useVolFilter = input.bool(true, "ATR Volatility Filter", group="Filters")
+atrLen       = input.int(14,   "ATR Length",            group="Filters")
+atrMult      = input.float(1.0,"Min ATR vs Average",    group="Filters", step=0.1)
+useAdxFilter = input.bool(true, "ADX Trend Filter",      group="Filters")
+adxLen       = input.int(14,   "ADX Length",            group="Filters")
+adxThresh    = input.int(20,   "Min ADX",               group="Filters", minval=1)
+cooldown     = input.int(5,    "Cooldown (bars)",        group="Filters", minval=1)
+
+useSess      = input.bool(true, "Session Filter",        group="Sessions (UTC)")
+londonOpen   = input.int(7,    "London Open",            group="Sessions (UTC)", minval=0, maxval=23)
+londonClose  = input.int(17,   "London Close",           group="Sessions (UTC)", minval=0, maxval=23)
+nyOpen       = input.int(13,   "NY Open",                group="Sessions (UTC)", minval=0, maxval=23)
+nyClose      = input.int(22,   "NY Close",               group="Sessions (UTC)", minval=0, maxval=23)
+
+// ═══════════════════════ CORE ═════════════════════════
+hma(src, l) => ta.wma(2 * ta.wma(src, l / 2) - ta.wma(src, l), math.floor(math.sqrt(l)))
+
+curve = hma(close, len)
+e8    = ta.ema(close, 8)
+atr   = ta.atr(atrLen)
+
+nowUp = curve > curve[1]
+wasUp = curve[1] > curve[2]
+
+// ═══════════════════════ FILTERS ══════════════════════
+volOk = not useVolFilter or atr > ta.sma(atr, 50) * atrMult
+
+[_, _, adx] = ta.dmi(adxLen, adxLen)
+adxOk = not useAdxFilter or adx > adxThresh
+
+hrUtc  = hour(time, "UTC")
+inSess = (hrUtc >= londonOpen and hrUtc < londonClose) or (hrUtc >= nyOpen and hrUtc < nyClose)
+sessOk = not useSess or inSess
+
+var int lastBuy  = 0
+var int lastSell = 0
+cdBuyOk  = (bar_index - lastBuy)  > cooldown
+cdSellOk = (bar_index - lastSell) > cooldown
+
+// ═══════════════════════ SIGNALS ══════════════════════
+rawBuy  = nowUp and not wasUp and close > e8 and barstate.isconfirmed
+rawSell = not nowUp and wasUp  and close < e8 and barstate.isconfirmed
+
+buy  = rawBuy  and volOk and adxOk and sessOk and cdBuyOk
+sell = rawSell and volOk and adxOk and sessOk and cdSellOk
+
+if buy
+    lastBuy := bar_index
+if sell
+    lastSell := bar_index
+
+// ═══════════════════════ BACKGROUND ═══════════════════
+// Green = good to trade | Orange = in session but ranging | Grey = outside session
+bgCol = if useSess and not inSess
+    color.new(color.gray, 93)
+else if volOk and adxOk
+    color.new(color.green, 93)
+else
+    color.new(color.orange, 93)
+
+bgcolor(bgCol, title="Market Condition")
+
+// ═══════════════════════ CURVE ════════════════════════
+plot(curve, "Curve", nowUp ? color.green : color.red, 2)
+
+// ═══════════════════════ SIGNAL ARROWS ════════════════
+plotshape(buy  ? low  : na, "Buy",  shape.triangleup,   location.belowbar, color.green, size=size.small, text="Buy",  textcolor=color.green)
+plotshape(sell ? high : na, "Sell", shape.triangledown,  location.abovebar, color.red,   size=size.small, text="Sell", textcolor=color.red)
+
+// ═══════════════════════ SL / TP LINES ════════════════
+if buy
+    sl = close - atr * slAtrMult
+    tp = close + (close - sl) * rrRatio
+    line.new(bar_index, sl, bar_index + 20, sl, color=color.red,  width=1, style=line.style_dashed)
+    line.new(bar_index, tp, bar_index + 20, tp, color=color.lime, width=1, style=line.style_dashed)
+    label.new(bar_index + 20, sl, "SL", color=color.new(color.red,  80), textcolor=color.red,  style=label.style_label_left, size=size.tiny)
+    label.new(bar_index + 20, tp, "TP", color=color.new(color.lime, 80), textcolor=color.lime, style=label.style_label_left, size=size.tiny)
+
+if sell
+    sl = close + atr * slAtrMult
+    tp = close - (sl - close) * rrRatio
+    line.new(bar_index, sl, bar_index + 20, sl, color=color.red,  width=1, style=line.style_dashed)
+    line.new(bar_index, tp, bar_index + 20, tp, color=color.lime, width=1, style=line.style_dashed)
+    label.new(bar_index + 20, sl, "SL", color=color.new(color.red,  80), textcolor=color.red,  style=label.style_label_left, size=size.tiny)
+    label.new(bar_index + 20, tp, "TP", color=color.new(color.lime, 80), textcolor=color.lime, style=label.style_label_left, size=size.tiny)
+
+// ═══════════════════════ ALERTS ═══════════════════════
+alertcondition(buy,  "BUY NOW")
+alertcondition(sell, "SELL NOW")
