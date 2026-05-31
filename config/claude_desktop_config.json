@@ -1,0 +1,65 @@
+﻿{
+  "mcpServers": {
+    "github": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PAT_HERE"
+      }
+    },
+    "filesystem": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y", "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\YOUR_USERNAME",
+        "C:\\Users\\YOUR_USERNAME\\Desktop",
+        "C:\\Users\\YOUR_USERNAME\\Documents"
+      ]
+    },
+    "memory": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "fetch": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "sequential-thinking": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "tradingview": {
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming\\Python\\Python314\\Scripts\\tradingview-mcp.exe",
+      "args": []
+    },
+    "alpaca": {
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming\\Python\\Python314\\Scripts\\alpaca-mcp-server.exe",
+      "args": [],
+      "env": {
+        "ALPACA_API_KEY": "YOUR_ALPACA_API_KEY",
+        "ALPACA_SECRET_KEY": "YOUR_ALPACA_SECRET_KEY",
+        "ALPACA_BASE_URL": "https://paper-api.alpaca.markets"
+      }
+    },
+    "pinescript-mcp": {
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming\\npm\\pinescript-mcp-server.cmd",
+      "args": []
+    },
+    "tradingview-mcp": {
+      "command": "node",
+      "args": ["C:\\Users\\YOUR_USERNAME\\Desktop\\tradingview-mcp\\src\\server.js"]
+    },
+    "financekit-mcp": {
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming\\Python\\Python314\\Scripts\\financekit.exe",
+      "args": []
+    },
+    "cerebrus-pulse-mcp": {
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming\\Python\\Python314\\Scripts\\cerebrus-pulse-mcp.exe",
+      "args": [],
+      "env": {
+        "CEREBRUS_WALLET_KEY": "YOUR_BASE_WALLET_PRIVATE_KEY_OPTIONAL",
+        "CEREBRUS_WALLET_KEY_SOLANA": "YOUR_SOLANA_WALLET_PRIVATE_KEY_OPTIONAL"
+      }
+    }
+  }
+}
